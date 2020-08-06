@@ -7,3 +7,14 @@ mainfile.spec
 *.json
 tempCodeRunnerFile.py
 *.pyc
+*.toc
+*.zip
+*.pkg
+*.pyz
+*.txt
+*.pdf
+*.ai
+*.sqlite
+.vs/UMT-Analysis/v16/.suo
+*.manifest
+*.html

@@ -29,6 +29,11 @@ class UMT(QtWidgets.QMainWindow, umt_gui.Ui_UMT_Auswertung):
     def __init__(self):
         super(UMT, self).__init__()
         self.setupUi(self)
+        # Setze icon
+        root = QtCore.QFileInfo(__file__).absolutePath()
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(root + "/Icons/ico.png"), QtGui.QIcon.Selected, QtGui.QIcon.On)
+        self.setWindowIcon(icon)
         self.statusBar().showMessage('Programm erfolgreich geladen.', 2000)
         self.setup_triggers()   # lade Events für Buttons
 
@@ -505,9 +510,10 @@ class UMT(QtWidgets.QMainWindow, umt_gui.Ui_UMT_Auswertung):
         
         self.get_rkf_data()
 
-        ret = self.calc_friction_distance()
-        if not ret:
-            return False
+        if self.rb_cof_s.isChecked():
+            ret = self.calc_friction_distance()
+            if not ret:
+                return False
         
 
         cof = self.calc_rkf()
@@ -924,7 +930,10 @@ class UMT(QtWidgets.QMainWindow, umt_gui.Ui_UMT_Auswertung):
         
         self.get_rkf_data()
 
-        self.calc_friction_distance()
+        if self.rb_cof_s.isChecked():
+            ret = self.calc_friction_distance()
+            if not ret:
+                return
 
         cof = self.calc_rkf()
 
@@ -1248,9 +1257,28 @@ class UMT(QtWidgets.QMainWindow, umt_gui.Ui_UMT_Auswertung):
 
     def file_open(self):
         self.un_highlight(self.txt_input_file)
-        self.fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Wähle eine Quelldatei', filter='*.txt')[0]
-        if not self.fname:
+        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Wähle eine Quelldatei', filter='*.txt')[0]
+        # Wenn Nutzer Dateipfadauswahl abbricht
+        if not fname:
             return
+
+        try:
+            # Wenn neuer Dateipfad = alter Dateipfad --> lade nichts neu
+            if fname == self.fname:
+                return
+            else:
+                # Wenn alte Datei vorhanden, aber Unterschied im Dateinamen
+                # Lösche alte Daten
+                self.clear_df()
+                # Lade dann neu
+                self.fname = fname
+                pass
+        # Wenn noch gar keine alten Daten vorhanden --> lade normal die Date
+        except AttributeError:
+            self.fname  = fname
+            pass
+            
+        
         #  Setze den Pfad in die Felder ein
         self.proc_path(self.txt_input_file, self.fname)
         # Ziehe die Frequenz oder die Geschwindigkeit aus den Daten

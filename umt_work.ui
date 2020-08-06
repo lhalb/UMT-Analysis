@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>UMT-Analysis</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -419,7 +419,7 @@ Verschleißweg</string>
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>746</width>
+           <width>729</width>
            <height>292</height>
           </rect>
          </property>
@@ -1369,7 +1369,7 @@ Verschleißweg</string>
                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Untere Zeit- oder Weggrenze, bei der der statische Reibkoeffizient berechnet werden soll.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                        </property>
                        <property name="text">
-                        <string>4707</string>
+                        <string/>
                        </property>
                        <property name="alignment">
                         <set>Qt::AlignCenter</set>
@@ -1402,7 +1402,7 @@ Verschleißweg</string>
                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Obere Zeit- oder Weggrenze, bei der der statische Reibkoeffizient berechnet werden soll.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                        </property>
                        <property name="text">
-                        <string>6000</string>
+                        <string/>
                        </property>
                        <property name="alignment">
                         <set>Qt::AlignCenter</set>
@@ -1593,7 +1593,7 @@ Verschleißweg</string>
            <x>0</x>
            <y>0</y>
            <width>746</width>
-           <height>162</height>
+           <height>174</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_11">

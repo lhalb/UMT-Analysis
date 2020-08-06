@@ -1,0 +1,9 @@
+
+txt-data.txt
+mainfile.spec
+.vscode/launch.json
+.vscode/settings.json
+*.xlsx
+*.json
+tempCodeRunnerFile.py
+*.pyc

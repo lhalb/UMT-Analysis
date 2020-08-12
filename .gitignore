@@ -18,3 +18,5 @@ tempCodeRunnerFile.py
 .vs/UMT-Analysis/v16/.suo
 *.manifest
 *.html
+convert_ui.bat
+make_exe.bat

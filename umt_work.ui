@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>766</width>
-    <height>809</height>
+    <width>720</width>
+    <height>823</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -419,7 +419,7 @@ Verschleißweg</string>
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>729</width>
+           <width>700</width>
            <height>292</height>
           </rect>
          </property>
@@ -1592,8 +1592,8 @@ Verschleißweg</string>
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>746</width>
-           <height>174</height>
+           <width>700</width>
+           <height>180</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_11">
@@ -2090,7 +2090,7 @@ Verschleißweg</string>
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>729</width>
+           <width>683</width>
            <height>186</height>
           </rect>
          </property>
@@ -2374,7 +2374,7 @@ Verschleißweg</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>766</width>
+     <width>720</width>
      <height>21</height>
     </rect>
    </property>
@@ -2462,34 +2462,79 @@ Verschleißweg</string>
  <tabstops>
   <tabstop>txt_input_file</tabstop>
   <tabstop>tool_input_file</tabstop>
-  <tabstop>list_data</tabstop>
+  <tabstop>but_clear_data</tabstop>
+  <tabstop>txt_output_pics</tabstop>
+  <tabstop>tool_output_pics</tabstop>
   <tabstop>txt_para_frequency</tabstop>
+  <tabstop>txt_para_hub</tabstop>
+  <tabstop>but_calc_s</tabstop>
+  <tabstop>cb_save_pic_raw</tabstop>
+  <tabstop>but_plot_raw</tabstop>
+  <tabstop>but_collapse_settings</tabstop>
   <tabstop>txt_para_min_thresh</tabstop>
   <tabstop>txt_para_min_dist</tabstop>
   <tabstop>txt_para_min_n</tabstop>
   <tabstop>txt_para_min_pos</tabstop>
+  <tabstop>cb_save_pic_min</tabstop>
+  <tabstop>but_plot_min</tabstop>
+  <tabstop>but_min_ok</tabstop>
   <tabstop>txt_para_dist_thresh</tabstop>
   <tabstop>txt_para_dist_off</tabstop>
+  <tabstop>cb_save_pic_dist</tabstop>
+  <tabstop>but_plot_dist</tabstop>
+  <tabstop>but_dist_ok</tabstop>
   <tabstop>txt_para_area_shift</tabstop>
   <tabstop>txt_para_area_n</tabstop>
   <tabstop>txt_para_area_pos</tabstop>
+  <tabstop>cb_save_pic_area</tabstop>
+  <tabstop>but_plot_area</tabstop>
+  <tabstop>but_area_ok</tabstop>
+  <tabstop>rb_filt_sav</tabstop>
+  <tabstop>rb_filt_roll</tabstop>
+  <tabstop>rb_filt_med</tabstop>
+  <tabstop>txt_para_filt_n_sav</tabstop>
+  <tabstop>txt_para_filt_p_sav</tabstop>
+  <tabstop>txt_para_filt_n_roll</tabstop>
+  <tabstop>txt_para_filt_n_med</tabstop>
+  <tabstop>cb_save_pic_filt</tabstop>
+  <tabstop>but_plot_filt</tabstop>
+  <tabstop>but_filt_ok</tabstop>
+  <tabstop>rb_cof_t</tabstop>
+  <tabstop>rb_cof_s</tabstop>
   <tabstop>txt_para_cof_start</tabstop>
   <tabstop>txt_para_cof_end</tabstop>
+  <tabstop>cb_save_pic_cof</tabstop>
+  <tabstop>but_plot_cof</tabstop>
+  <tabstop>but_cof_ok</tabstop>
+  <tabstop>but_collapse_export</tabstop>
   <tabstop>txt_output_file</tabstop>
   <tabstop>tool_output_file</tabstop>
+  <tabstop>rb_export_red</tabstop>
+  <tabstop>rb_export_n</tabstop>
   <tabstop>txt_para_exp_red</tabstop>
+  <tabstop>txt_para_exp_n</tabstop>
   <tabstop>cb_save_pic_export</tabstop>
   <tabstop>but_plot_export</tabstop>
+  <tabstop>but_export</tabstop>
+  <tabstop>list_data</tabstop>
+  <tabstop>but_collapse_auto</tabstop>
   <tabstop>cb_save_pic_auto</tabstop>
   <tabstop>but_auto_prep</tabstop>
   <tabstop>but_auto_filt</tabstop>
   <tabstop>but_auto_cof</tabstop>
   <tabstop>but_auto_export</tabstop>
+  <tabstop>gb_batch</tabstop>
   <tabstop>txt_input_batch</tabstop>
   <tabstop>tool_input_batch</tabstop>
   <tabstop>txt_output_batch</tabstop>
   <tabstop>tool_output_batch</tabstop>
+  <tabstop>cb_save_pic_batch</tabstop>
+  <tabstop>but_batch</tabstop>
   <tabstop>but_cancel</tabstop>
+  <tabstop>but_debug</tabstop>
+  <tabstop>scroll_settings</tabstop>
+  <tabstop>scroll_export</tabstop>
+  <tabstop>scroll_auto</tabstop>
  </tabstops>
  <resources/>
  <connections>

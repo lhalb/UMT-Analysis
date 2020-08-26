@@ -19,13 +19,13 @@ Code für Umwandlung:
 '''
 from PyQt5.QtWidgets import QMessageBox as QMB
 from PyQt5 import QtCore, QtGui, QtWidgets
-import umt_gui
+import umt_gui_tab
 import umt_filter as umt
 import sys # We need sys so that we can pass argv to QApplication
 from os.path import basename
 import json
 
-class UMT(QtWidgets.QMainWindow, umt_gui.Ui_UMT_Auswertung):
+class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
     def __init__(self):
         super(UMT, self).__init__()
         self.setupUi(self)
@@ -37,6 +37,10 @@ class UMT(QtWidgets.QMainWindow, umt_gui.Ui_UMT_Auswertung):
         self.statusBar().showMessage('Programm erfolgreich geladen.', 2000)
         self.setup_triggers()   # lade Events für Buttons
 
+        self.tabs.setTabEnabled(1, False)
+        self.tabs.setTabEnabled(2, False)
+        self.tabs.setTabEnabled(3, False)
+
     def setup_triggers(self):
         self.but_debug.clicked.connect(self.debug)
         self.but_calc_s.clicked.connect(self.calc_friction_distance)
@@ -44,9 +48,9 @@ class UMT(QtWidgets.QMainWindow, umt_gui.Ui_UMT_Auswertung):
         self.but_clear_data.clicked.connect(self.clear_df)
 
         # Aus-/Einklappen
-        self.but_collapse_export.clicked.connect(lambda: self.toggle_area(self.but_collapse_export))
-        self.but_collapse_auto.clicked.connect(lambda: self.toggle_area(self.but_collapse_auto))
-        self.but_collapse_settings.clicked.connect(lambda: self.toggle_area(self.but_collapse_settings))
+        # self.but_collapse_export.clicked.connect(lambda: self.toggle_area(self.but_collapse_export))
+        # self.but_collapse_auto.clicked.connect(lambda: self.toggle_area(self.but_collapse_auto))
+        # self.but_collapse_settings.clicked.connect(lambda: self.toggle_area(self.but_collapse_settings))
 
         # Automation
         self.but_auto_prep.clicked.connect(self.auto_prepare_data)
@@ -108,6 +112,8 @@ class UMT(QtWidgets.QMainWindow, umt_gui.Ui_UMT_Auswertung):
             return False
 
         self.compare_lists(df)
+
+        self.tabs.setTabEnabled(3, True)
 
         return df
 
@@ -897,7 +903,9 @@ class UMT(QtWidgets.QMainWindow, umt_gui.Ui_UMT_Auswertung):
             pass
         else: 
             return
-        self.gb_filter.setEnabled(True)
+        # self.gb_filter.setEnabled(True)
+        
+        self.tabs.setTabEnabled(1, True)
 
     def confirm_filter(self):
         if self.df_3 is not None:
@@ -918,7 +926,8 @@ class UMT(QtWidgets.QMainWindow, umt_gui.Ui_UMT_Auswertung):
 
         self.df_3 = df
 
-        self.gb_cof.setEnabled(True)
+        # self.gb_cof.setEnabled(True)
+        self.tabs.setTabEnabled(2, True)
         self.fill_rkf_bounds(self.rb_cof_t)
 
     def confirm_cof(self):
@@ -951,10 +960,12 @@ class UMT(QtWidgets.QMainWindow, umt_gui.Ui_UMT_Auswertung):
         self.disable_settings()
 
     def disable_settings(self):
-        self.gb_cof.setEnabled(False)
-        self.gb_filter.setEnabled(False)
-        self.gb_area.setEnabled(False)
-        self.gb_dist.setEnabled(False)
+        print('hier muss noch die Deaktivierung der Tabs rein')
+        # self.gb_cof.setEnabled(False)
+        # self.gb_filter.setEnabled(False)
+        # self.gb_area.setEnabled(False)
+        # self.gb_dist.setEnabled(False)
+        return
 
     def get_frequency(self, fname):
         def find_hz_in_fname(fname, row, raw=False, splitter='_'):

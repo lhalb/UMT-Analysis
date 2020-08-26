@@ -10,6 +10,70 @@
     <height>543</height>
    </rect>
   </property>
+  <property name="palette">
+   <palette>
+    <active>
+     <colorrole role="Base">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Window">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </active>
+    <inactive>
+     <colorrole role="Base">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Window">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </inactive>
+    <disabled>
+     <colorrole role="Base">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Window">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </disabled>
+   </palette>
+  </property>
   <property name="windowTitle">
    <string>UMT-Analysis</string>
   </property>
@@ -344,6 +408,9 @@ Verschleißweg</string>
     </item>
     <item>
      <widget class="QTabWidget" name="tabs">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="tabPosition">
        <enum>QTabWidget::North</enum>
       </property>
@@ -356,7 +423,22 @@ Verschleißweg</string>
       <property name="elideMode">
        <enum>Qt::ElideNone</enum>
       </property>
-      <widget class="QWidget" name="tab">
+      <property name="usesScrollButtons">
+       <bool>true</bool>
+      </property>
+      <property name="documentMode">
+       <bool>false</bool>
+      </property>
+      <property name="tabsClosable">
+       <bool>false</bool>
+      </property>
+      <property name="movable">
+       <bool>false</bool>
+      </property>
+      <property name="tabBarAutoHide">
+       <bool>false</bool>
+      </property>
+      <widget class="QWidget" name="tab_prep">
        <attribute name="title">
         <string>Vorbereitung</string>
        </attribute>
@@ -364,7 +446,7 @@ Verschleißweg</string>
         <item>
          <widget class="QScrollArea" name="scroll_settings">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -395,8 +477,8 @@ Verschleißweg</string>
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>468</width>
-             <height>261</height>
+             <width>451</width>
+             <height>264</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -592,10 +674,13 @@ Verschleißweg</string>
                      <property name="orientation">
                       <enum>Qt::Vertical</enum>
                      </property>
+                     <property name="sizeType">
+                      <enum>QSizePolicy::Fixed</enum>
+                     </property>
                      <property name="sizeHint" stdset="0">
                       <size>
                        <width>20</width>
-                       <height>40</height>
+                       <height>10</height>
                       </size>
                      </property>
                     </spacer>
@@ -739,10 +824,13 @@ Verschleißweg</string>
                      <property name="orientation">
                       <enum>Qt::Vertical</enum>
                      </property>
+                     <property name="sizeType">
+                      <enum>QSizePolicy::Fixed</enum>
+                     </property>
                      <property name="sizeHint" stdset="0">
                       <size>
                        <width>20</width>
-                       <height>40</height>
+                       <height>10</height>
                       </size>
                      </property>
                     </spacer>
@@ -884,7 +972,7 @@ Verschleißweg</string>
                  </item>
                  <item>
                   <layout class="QVBoxLayout" name="verticalLayout_5">
-                   <item>
+                   <item alignment="Qt::AlignHCenter">
                     <widget class="QCheckBox" name="cb_save_pic_area">
                      <property name="toolTip">
                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aktivieren, wenn Diagramme gesichert werden sollen.&lt;/p&gt;&lt;p&gt;Falls kein Bildordner angegeben wird, erscheint Information zu Speicherort.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -909,10 +997,13 @@ Verschleißweg</string>
                      <property name="orientation">
                       <enum>Qt::Vertical</enum>
                      </property>
+                     <property name="sizeType">
+                      <enum>QSizePolicy::Fixed</enum>
+                     </property>
                      <property name="sizeHint" stdset="0">
                       <size>
                        <width>20</width>
-                       <height>40</height>
+                       <height>10</height>
                       </size>
                      </property>
                     </spacer>
@@ -937,19 +1028,35 @@ Verschleißweg</string>
               </item>
              </layout>
             </item>
+            <item>
+             <spacer name="verticalSpacer_8">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
            </layout>
           </widget>
          </widget>
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_4">
+      <widget class="QWidget" name="tab_filt">
        <attribute name="title">
         <string>Filterung</string>
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_13">
         <item>
          <widget class="QScrollArea" name="scrollArea">
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
           <property name="widgetResizable">
            <bool>true</bool>
           </property>
@@ -958,11 +1065,11 @@ Verschleißweg</string>
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>466</width>
-             <height>259</height>
+             <width>468</width>
+             <height>261</height>
             </rect>
            </property>
-           <widget class="QWidget" name="">
+           <widget class="QWidget" name="layoutWidget">
             <property name="geometry">
              <rect>
               <x>10</x>
@@ -1147,13 +1254,13 @@ Verschleißweg</string>
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="">
+           <widget class="QWidget" name="layoutWidget">
             <property name="geometry">
              <rect>
               <x>330</x>
               <y>10</y>
               <width>77</width>
-              <height>81</height>
+              <height>83</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_22">
@@ -1216,13 +1323,19 @@ Verschleißweg</string>
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_5">
+      <widget class="QWidget" name="tab_cof">
        <attribute name="title">
         <string>COF-Berechnung</string>
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
          <widget class="QScrollArea" name="scrollArea_2">
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Plain</enum>
+          </property>
           <property name="widgetResizable">
            <bool>true</bool>
           </property>
@@ -1231,11 +1344,11 @@ Verschleißweg</string>
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>466</width>
-             <height>259</height>
+             <width>468</width>
+             <height>261</height>
             </rect>
            </property>
-           <widget class="QWidget" name="">
+           <widget class="QWidget" name="layoutWidget">
             <property name="geometry">
              <rect>
               <x>10</x>
@@ -1356,7 +1469,7 @@ Verschleißweg</string>
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="">
+           <widget class="QWidget" name="layoutWidget">
             <property name="geometry">
              <rect>
               <x>170</x>
@@ -1428,13 +1541,19 @@ Verschleißweg</string>
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_2">
+      <widget class="QWidget" name="tab_export">
        <attribute name="title">
         <string>Export</string>
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_5">
         <item>
          <widget class="QScrollArea" name="scrollArea_3">
+          <property name="autoFillBackground">
+           <bool>false</bool>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
           <property name="widgetResizable">
            <bool>true</bool>
           </property>
@@ -1443,8 +1562,8 @@ Verschleißweg</string>
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>466</width>
-             <height>259</height>
+             <width>468</width>
+             <height>261</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_9">
@@ -1864,7 +1983,7 @@ Verschleißweg</string>
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_3">
+      <widget class="QWidget" name="tab_auto">
        <attribute name="title">
         <string>Automation</string>
        </attribute>

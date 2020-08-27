@@ -385,7 +385,6 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 self.txt_para_cof_end.setText(f'{round(ende, 2)}')
         self.txt_para_cof_start.setText('')
 
-
     def calc_rkf(self):
         self.statusBar().showMessage('')
         if self.df_3 is not None:
@@ -462,6 +461,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         umt.save_as_xls(df, savepath)
 
         self.show_info_box('Datei erfolgreich exportiert')
+
 
     # ------------------ Automation -------------------------
     def auto_prepare_data(self):
@@ -949,6 +949,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         df = df.assign(stat_cof = cof)
 
         self.df_3 = df
+
 
     # ------------------- Hilfsfunktionen ------------------------
     def clear_df(self):

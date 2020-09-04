@@ -1,3 +1,4 @@
+from math import floor
 import pandas as pd
 import numpy as np
 from scipy.signal import savgol_filter as sf
@@ -8,6 +9,11 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import random
 import os
+
+def shift(x, n):
+    shifted = x*10**n
+    floored = floor(shifted)
+    return floored/10**n
 
 def get_data(fname):
     # lese erste Zeile ein
@@ -53,6 +59,10 @@ def get_data(fname):
     return df
 
 def plot_data(x, y, x2=None, y2=None, ptype='original', boundaries=[[1.5,6], [0,6]], save=False, **kwargs):
+    def shift(x, n):
+        shifted = x*10**n
+        floored = floor(shifted)
+        return floored/10**n
     def save_func(x, ptype, dargs):
         if save:
             if len(x) > 10000:
@@ -255,9 +265,23 @@ def plot_data(x, y, x2=None, y2=None, ptype='original', boundaries=[[1.5,6], [0,
             ax.plot(x2, y2,'b-',linewidth=0.5, label=f'{filt}')
         
         if 'rkf' in kwargs.keys():
-            rkf = kwargs['rkf']
+            rkf, stabw = kwargs['rkf']
+            # teste, auf wie viele Stellen gerundet werden soll (wann ist Standardabweichung nicht mehr 0)
+            print(f'stabw = {stabw}')
+            for i in range(1, 5):
+                a = shift(stabw, i)
+                print(i, a)
+                if a == 0:
+                    continue
+                else:
+                    n = i+1
+                    break
+                
+            # Gebe max. 5 Stellen aus, wenn Std.-abweichung sehr sehr klein ist
+            if not n: 
+                n = 5
             ax.hlines(rkf,0, 1, transform=ax.get_yaxis_transform(), colors='r', linewidth=1, label='Median', linestyle='--')
-            ax.text(0.98, 0.98, f'COF = {round(rkf, 2)}', color='r', horizontalalignment='right', verticalalignment='top', transform=ax.transAxes)
+            ax.text(0.98, 0.98, f'COF = {round(rkf, n)}±{round(stabw, n)}', color='r', horizontalalignment='right', verticalalignment='top', transform=ax.transAxes)
 
         if y.name == 'COF':
             ax.set_ylabel('COF [-]')
@@ -293,7 +317,11 @@ def plot_data(x, y, x2=None, y2=None, ptype='original', boundaries=[[1.5,6], [0,
     return
 
 def reduce_data(dat, n=500, p=3):
-    return sf(dat, n, p)    # (Daten, Glättungsbereich, Polynom n-ten Grades)
+    # try:
+    #     return sf(dat, n, p)    # (Daten, Glättungsbereich, Polynom n-ten Grades)
+    # except np.linalg.LinAlgError:
+    #     return dat
+    return sf(dat, n, p)
 
 def gleit_durch(x, N=500):
     return x.rolling(window=N).mean().iloc[N-1:].values

@@ -492,8 +492,8 @@ Verschleißweg</string>
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>503</width>
-             <height>318</height>
+             <width>507</width>
+             <height>342</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -1095,8 +1095,8 @@ Verschleißweg</string>
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>503</width>
-             <height>311</height>
+             <width>507</width>
+             <height>342</height>
             </rect>
            </property>
            <widget class="QWidget" name="layoutWidget">
@@ -1287,7 +1287,7 @@ Verschleißweg</string>
            <widget class="QWidget" name="layoutWidget">
             <property name="geometry">
              <rect>
-              <x>330</x>
+              <x>360</x>
               <y>10</y>
               <width>95</width>
               <height>99</height>
@@ -1386,8 +1386,8 @@ Verschleißweg</string>
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>503</width>
-             <height>311</height>
+             <width>507</width>
+             <height>342</height>
             </rect>
            </property>
            <widget class="QWidget" name="layoutWidget">
@@ -1619,8 +1619,8 @@ Verschleißweg</string>
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>530</width>
-             <height>290</height>
+             <width>465</width>
+             <height>176</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_9">
@@ -2088,8 +2088,8 @@ Verschleißweg</string>
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>528</width>
-             <height>290</height>
+             <width>481</width>
+             <height>186</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -2375,7 +2375,7 @@ Verschleißweg</string>
      <x>0</x>
      <y>0</y>
      <width>533</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

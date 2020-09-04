@@ -37,9 +37,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         self.statusBar().showMessage('Programm erfolgreich geladen.', 2000)
         self.setup_triggers()   # lade Events für Buttons
 
-        self.tabs.setTabEnabled(1, False)
-        self.tabs.setTabEnabled(2, False)
-        self.tabs.setTabEnabled(3, False)
+        self.disable_settings()
 
     def setup_triggers(self):
         self.but_debug.clicked.connect(self.debug)
@@ -209,8 +207,9 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             # Lade Daten als numpy array für bessere Kompatibilität
             unfiltered = self.df_3['RKF']
             # teste, welche Filtermethode gewählt wurde
-            if self.rb_filt_sav.isChecked():
-                filt = self.rb_filt_sav.text()
+            filt = self.get_filter()
+
+            if filt == self.rb_filt_sav.text():
                 n = int(self.txt_para_filt_n_sav.text())
                 p = int(self.txt_para_filt_p_sav.text())
                 #  Teste, ob n gerade ist
@@ -242,8 +241,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 # Filtere Daten
                 filtered_data = umt.reduce_data(unfiltered.values, n, p)
 
-            elif self.rb_filt_roll.isChecked():
-                filt = self.rb_filt_roll.text()
+            elif filt == self.rb_filt_roll.text():
                 n = int(self.txt_para_filt_n_roll.text())
 
                 filtered_data = umt.gleit_durch(unfiltered, n)
@@ -256,8 +254,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 else:
                     self.un_highlight(self.txt_para_filt_n_roll)
 
-            elif self.rb_filt_med.isChecked():
-                filt = self.rb_filt_med.text()
+            elif filt == self.rb_filt_med.text():
                 n = int(self.txt_para_filt_n_med.text())
 
                 #  Teste, ob n gerade ist
@@ -281,6 +278,15 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             return filt, filtered_data
         else:
             return False, False
+
+    def get_filter(self):
+        if self.rb_filt_sav.isChecked():
+            filt = self.rb_filt_sav.text()
+        elif self.rb_filt_roll.isChecked():
+            filt = self.rb_filt_roll.text()
+        elif self.rb_filt_med.isChecked():
+            filt = self.rb_filt_med.text()
+        return filt
 
     def calc_friction_distance(self):
         valid = self.validate_parameters()
@@ -406,16 +412,21 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             # Arbeite mit Wegdaten
             if self.rb_cof_s.isChecked():
                 s = 'V_weg'
-           
+
+            # Ermittle die Indices für die Berechnungsgrenzen
             idx_rkf_strt = df[s].loc[df[s] <= x_start].index[-1]
             idx_rkf_end = df[s].loc[df[s] <= x_end].index[-1]
 
+            data = df['RKF'].loc[idx_rkf_strt:idx_rkf_end]
 
-            # plotte die Originaldaten und die gefilterten Daten
-            # add_data(df, series, 'savgol')
+            # Berechne den statischen Reibkoeffizienten als Mittelwert im angegebenen Intervall
             rkf_stat = df['RKF'].loc[idx_rkf_strt:idx_rkf_end].mean()
-            
-            return rkf_stat
+            # Berechne die zugehörige Standardabweichung
+
+            rkf_devi = df['RKF'].loc[idx_rkf_strt:idx_rkf_end].std()
+
+
+            return rkf_stat, rkf_devi
 
         else:
             return
@@ -522,12 +533,12 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 return False
         
 
-        cof = self.calc_rkf()
+        cof, stabw = self.calc_rkf()
 
-        if not cof:
+        if not cof or stabw:
             return False
 
-        df = df.assign(stat_cof = cof)
+        df = df.assign(stat_cof = cof, stabw=stabw)
 
         self.df_3 = df
 
@@ -721,9 +732,12 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         else: 
             return
         
-        filt, fdata = self.get_filtered_data()
-        if not filt:
-            return
+        # teste, ob schon einmal gefiltert wurde und nehme ggf. diese Werte
+        if 'COF_gefiltert' not in self.df_3.columns:
+            filt, fdata = self.get_filtered_data()
+        else:
+            filt = self.get_filter()
+            fdata = self.df_3['COF_gefiltert']
 
         df = self.df_3
 
@@ -768,9 +782,13 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 modus = 'filtered'
         else:
             modus = 'rkf'
-            y_rkf = self.calc_rkf()
+            y_rkf, stabw = self.calc_rkf()
 
-        filt, fdata = self.get_filtered_data()
+        if 'COF_gefiltert' not in self.df_3.columns:
+            filt, fdata = self.get_filtered_data()
+        else:
+            filt = self.get_filter()
+            fdata = self.df_3['COF_gefiltert']
 
         df = self.df_3
 
@@ -810,7 +828,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         if modus == 'filtered':
             umt.plot_data(x, df['RKF'], x2, fdata, ptype='filtered',save=save, filter=filt, pic_path=savepath)
         elif modus == 'rkf':
-            umt.plot_data(x, df['RKF'], x2, fdata, ptype='filtered',save=save, filter=filt, pic_path=savepath, rkf=y_rkf)
+            umt.plot_data(x, df['RKF'], x2, fdata, ptype='filtered',save=save, filter=filt, pic_path=savepath, rkf=(y_rkf, stabw))
 
     def plot_export(self):
         # teste, ob schon Daten vorhanden sind
@@ -944,9 +962,11 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             if not ret:
                 return
 
-        cof = self.calc_rkf()
+        cof, stabw = self.calc_rkf()
 
-        df = df.assign(stat_cof = cof)
+        df = df.assign(stat_cof = cof, stabw=stabw)
+
+        self.compare_lists(df)
 
         self.df_3 = df
 
@@ -961,11 +981,11 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         self.disable_settings()
 
     def disable_settings(self):
-        print('hier muss noch die Deaktivierung der Tabs rein')
-        # self.gb_cof.setEnabled(False)
-        # self.gb_filter.setEnabled(False)
-        # self.gb_area.setEnabled(False)
-        # self.gb_dist.setEnabled(False)
+        self.tabs.setTabEnabled(1, False)
+        self.tabs.setTabEnabled(2, False)
+        self.tabs.setTabEnabled(3, False)
+        self.gb_dist.setEnabled(False)
+        self.gb_area.setEnabled(False)
         return
 
     def get_frequency(self, fname):

@@ -24,6 +24,7 @@ import umt_filter as umt
 import sys # We need sys so that we can pass argv to QApplication
 from os.path import basename
 import json
+from numpy.linalg import LinAlgError
 
 class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
     def __init__(self):
@@ -240,6 +241,13 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
 
                 # Filtere Daten
                 filtered_data = umt.reduce_data(unfiltered.values, n, p)
+                # filtered_data = filter_func(unfiltered.values, n, p)
+                # print(filtered_data)
+                if filtered_data is not None:
+                    pass
+                else: 
+                    return False, False
+                
 
             elif filt == self.rb_filt_roll.text():
                 n = int(self.txt_para_filt_n_roll.text())
@@ -400,12 +408,12 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 x_start = float(self.txt_para_cof_start.text())
             except ValueError:
                 self.show_error_box('Bitte Startpunkt für Koeffizientenberechnung angeben.')
-                return
+                return False, False
             try:
                 x_end = float(self.txt_para_cof_end.text())
             except ValueError:
                 self.show_error_box('Bitte Endpunkt für Koeffizientenberechnung angeben.')
-                return
+                return False, False
             # Arbeite mit Zeitdaten
             if self.rb_cof_t.isChecked():
                 s = 'Time'
@@ -414,17 +422,19 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 s = 'V_weg'
 
             # Ermittle die Indices für die Berechnungsgrenzen
-            idx_rkf_strt = df[s].loc[df[s] <= x_start].index[-1]
-            idx_rkf_end = df[s].loc[df[s] <= x_end].index[-1]
+            try:
+                idx_rkf_strt = df[s].loc[df[s] <= x_start].index[-1]
+            except IndexError:
+                self.show_error_box('Startpunkt nicht in den Daten enthalten.')
+                return False, False
 
-            data = df['RKF'].loc[idx_rkf_strt:idx_rkf_end]
+            idx_rkf_end = df[s].loc[df[s] <= x_end].index[-1]
 
             # Berechne den statischen Reibkoeffizienten als Mittelwert im angegebenen Intervall
             rkf_stat = df['RKF'].loc[idx_rkf_strt:idx_rkf_end].mean()
             # Berechne die zugehörige Standardabweichung
 
             rkf_devi = df['RKF'].loc[idx_rkf_strt:idx_rkf_end].std()
-
 
             return rkf_stat, rkf_devi
 
@@ -503,9 +513,14 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             
         filt, fdata = self.get_filtered_data()
         if not filt:
-            return
+            return False
         else:
             df = self.df_3
+
+        # letzte Zeilen müssen bei gleitendem DFurchschnitt gelöscht, da sonst Daten nicht assigned werden können
+        if self.rb_filt_roll.isChecked():
+            anz = int(self.txt_para_filt_n_roll.text())-1
+            df.drop(df.tail(anz).index,inplace=True)
 
         df = df.assign(COF_gefiltert = fdata)
 
@@ -535,7 +550,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
 
         cof, stabw = self.calc_rkf()
 
-        if not cof or stabw:
+        if not cof:
             return False
 
         df = df.assign(stat_cof = cof, stabw=stabw)
@@ -735,6 +750,8 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         # teste, ob schon einmal gefiltert wurde und nehme ggf. diese Werte
         if 'COF_gefiltert' not in self.df_3.columns:
             filt, fdata = self.get_filtered_data()
+            if not filt:
+                return
         else:
             filt = self.get_filter()
             fdata = self.df_3['COF_gefiltert']
@@ -780,12 +797,20 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 return
             else:
                 modus = 'filtered'
+        # Wenn untere Grenze >= obere Grenze
+        elif float(self.txt_para_cof_start.text()) >= float(self.txt_para_cof_end.text()):
+            self.show_error_box('Die Berechnungsgrenzen sind fehlerhaft.')
+            return
         else:
             modus = 'rkf'
             y_rkf, stabw = self.calc_rkf()
+            if not y_rkf:
+                return
 
         if 'COF_gefiltert' not in self.df_3.columns:
             filt, fdata = self.get_filtered_data()
+            if not filt:
+                return
         else:
             filt = self.get_filter()
             fdata = self.df_3['COF_gefiltert']
@@ -816,19 +841,20 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 df = self.df_3
                 x = df['V_weg']
         
-        # passe die gefilterten X-Werte an, falls andere Filter ausgewählt sind.
-        if self.rb_filt_med.isChecked() or self.rb_filt_sav.isChecked():
-            x2 = x
-        if self.rb_filt_roll.isChecked():
-            anz = int(self.txt_para_filt_n_roll.text())-1
-            x2 = x.iloc[:-anz]
-
-
+        # # passe die gefilterten X-Werte an, falls andere Filter ausgewählt sind.
+        # if self.rb_filt_med.isChecked() or self.rb_filt_sav.isChecked():
+        #     x2 = x
+        # if self.rb_filt_roll.isChecked():
+        #     anz = int(self.txt_para_filt_n_roll.text())-1
+        #     x2 = x.iloc[:-anz]
 
         if modus == 'filtered':
-            umt.plot_data(x, df['RKF'], x2, fdata, ptype='filtered',save=save, filter=filt, pic_path=savepath)
+            umt.plot_data(x, df['RKF'], x, fdata, ptype='filtered',save=save, filter=filt, pic_path=savepath)
         elif modus == 'rkf':
-            umt.plot_data(x, df['RKF'], x2, fdata, ptype='filtered',save=save, filter=filt, pic_path=savepath, rkf=(y_rkf, stabw))
+            start = float(self.txt_para_cof_start.text())
+            end = float(self.txt_para_cof_end.text())    
+            umt.plot_data(x, df['RKF'], x, fdata, ptype='filtered',save=save, filter=filt,\
+                pic_path=savepath, rkf=(y_rkf, stabw), rkf_start=start, rkf_end=end)
 
     def plot_export(self):
         # teste, ob schon Daten vorhanden sind
@@ -930,15 +956,20 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             pass
         else: 
             return
-        
+
+
         filt, fdata = self.get_filtered_data()
         if not filt:
             return
 
         df = self.df_3
 
+        # letzte Zeilen müssen bei gleitendem DFurchschnitt gelöscht, da sonst Daten nicht assigned werden können
+        if self.rb_filt_roll.isChecked():
+            anz = int(self.txt_para_filt_n_roll.text())-1
+            df.drop(df.tail(anz).index,inplace=True)
+
         df = df.assign(COF_gefiltert = fdata)
-        # df.loc[:, 'COF_gefiltert'] = fdata
 
         self.compare_lists(df)
 
@@ -962,7 +993,19 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             if not ret:
                 return
 
+        if self.txt_para_cof_start.text() == '':
+            self.show_error_box('Keine untere Berechnungsgrenze angegeben.')
+            return
+        if self.txt_para_cof_end.text() == '':
+            self.show_error_box('Keine obere Berechnungsgrenze angegeben.')
+            return
+        if float(self.txt_para_cof_start.text()) >= float(self.txt_para_cof_end.text()):
+            self.show_error_box('Die Berechnungsgrenzen sind fehlerhaft.')
+            return
+
         cof, stabw = self.calc_rkf()
+        if not cof:
+            return
 
         df = df.assign(stat_cof = cof, stabw=stabw)
 

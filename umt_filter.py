@@ -266,11 +266,26 @@ def plot_data(x, y, x2=None, y2=None, ptype='original', boundaries=[[1.5,6], [0,
         
         if 'rkf' in kwargs.keys():
             rkf, stabw = kwargs['rkf']
+            rkf_start = kwargs['rkf_start']
+            rkf_end = kwargs['rkf_end']
+
+            idx_start = x2[x2 <= rkf_start].idxmax()
+            idx_end = x2[x2 <= rkf_end].idxmax()
+            
+            y_max = y2.loc[idx_start:idx_end].max()
+            y_min = y2.loc[idx_start:idx_end].min()
+
+            x_pos = rkf_start
+            
+
+            height = (y_max - y_min) * 1.5
+            width = rkf_end - rkf_start
+
+            y_pos = rkf - height/2
+
             # teste, auf wie viele Stellen gerundet werden soll (wann ist Standardabweichung nicht mehr 0)
-            print(f'stabw = {stabw}')
             for i in range(1, 5):
                 a = shift(stabw, i)
-                print(i, a)
                 if a == 0:
                     continue
                 else:
@@ -280,8 +295,19 @@ def plot_data(x, y, x2=None, y2=None, ptype='original', boundaries=[[1.5,6], [0,
             # Gebe max. 5 Stellen aus, wenn Std.-abweichung sehr sehr klein ist
             if not n: 
                 n = 5
+
+            face = Rectangle((x_pos, y_pos), width, height, facecolor="green", alpha=0.1)
+            edge = Rectangle((x_pos, y_pos), width, height, edgecolor='green', linewidth=0.5, fill=False, label='Berechnungsintervall')
+            # ax.text(x_pos, y_pos+height, 'Berechnungsbereich', color='g', fontsize=8, verticalalignment='bottom')
+
+            ax.add_patch(face)
+            ax.add_patch(edge)
+
+            # ax.vlines(rkf_start, 0, 1, transform=ax.get_xaxis_transform(), colors='k', alpha=0.6, linewidth=0.5, linestyle='-')
+            # ax.vlines(rkf_end, 0, 1, transform=ax.get_xaxis_transform(), colors='k', alpha=0.6, linewidth=0.5, linestyle='-')
             ax.hlines(rkf,0, 1, transform=ax.get_yaxis_transform(), colors='r', linewidth=1, label='Median', linestyle='--')
             ax.text(0.98, 0.98, f'COF = {round(rkf, n)}±{round(stabw, n)}', color='r', horizontalalignment='right', verticalalignment='top', transform=ax.transAxes)
+            
 
         if y.name == 'COF':
             ax.set_ylabel('COF [-]')
@@ -317,11 +343,10 @@ def plot_data(x, y, x2=None, y2=None, ptype='original', boundaries=[[1.5,6], [0,
     return
 
 def reduce_data(dat, n=500, p=3):
-    # try:
-    #     return sf(dat, n, p)    # (Daten, Glättungsbereich, Polynom n-ten Grades)
-    # except np.linalg.LinAlgError:
-    #     return dat
-    return sf(dat, n, p)
+    try:
+        return sf(dat, n, p)    # (Daten, Glättungsbereich, Polynom n-ten Grades)
+    except np.linalg.LinAlgError:
+        return sf(dat, n, p)
 
 def gleit_durch(x, N=500):
     return x.rolling(window=N).mean().iloc[N-1:].values
@@ -400,8 +425,6 @@ def save_as_xls(s, path=''):
         fname = os.path.split(path)[1].split('.')[1]
 
     s.to_excel(path, sheet_name=fname)
-    
-
 
 def main():
     # fname = 'data/txt-data.txt'

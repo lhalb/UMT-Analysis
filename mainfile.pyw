@@ -399,6 +399,23 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 self.txt_para_cof_end.setText(f'{round(ende, 2)}')
         self.txt_para_cof_start.setText('')
 
+    def create_bound_col(self, df, start, stop):
+        # Falls Grenzen schon vorhanden sind
+        if 'BNDS' in df.columns:
+            pass
+        else:
+            df = df.reset_index()
+
+            # Fuege leere Spalte ein
+            df = df.assign(BNDS = '')
+
+            # Setze die Grenzen in die ersten beiden Zeilen ein
+            df.at['BNDS', 0] = start
+            df.at['BNDS', 1] = stop
+
+        return df['BNDS']
+
+
     def calc_rkf(self):
         self.statusBar().showMessage('')
         if self.df_3 is not None:
@@ -429,6 +446,10 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 return False, False
 
             idx_rkf_end = df[s].loc[df[s] <= x_end].index[-1]
+
+            # Start- und Endpunkt sind bekannt, fuege diese Werte in eine gesonderte Spalte ein
+
+            
 
             # Berechne den statischen Reibkoeffizienten als Mittelwert im angegebenen Intervall
             rkf_stat = df['RKF'].loc[idx_rkf_strt:idx_rkf_end].mean()
@@ -553,7 +574,10 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         if not cof:
             return False
 
-        df = df.assign(stat_cof = cof, stabw=stabw)
+        boundaries = self.create_bound_col(df, float(self.txt_para_cof_start.text()), float(self.txt_para_cof_end.text()))
+
+
+        df = df.assign(stat_cof = cof, stabw=stabw, BNDS=boundaries)
 
         self.df_3 = df
 
@@ -1007,7 +1031,9 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         if not cof:
             return
 
-        df = df.assign(stat_cof = cof, stabw=stabw)
+        boundaries = self.create_bound_col(df, float(self.txt_para_cof_start.text()), float(self.txt_para_cof_end.text()))
+
+        df = df.assign(stat_cof = cof, stabw=stabw, BNDS=boundaries)
 
         self.compare_lists(df)
 
@@ -1373,6 +1399,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         '''
             In diese Funktion kommt alles rein, was gerade getestet werden soll
         '''
+        print(self.df_3.head(20))
         return
 
     def show_msg_box(self, text='Dies ist eine Warnung.'):

@@ -1393,8 +1393,6 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         '''
             In diese Funktion kommt alles rein, was gerade getestet werden soll
         '''
-        df = self.df_3
-        print(df.head(20))
         return
 
     def show_msg_box(self, text='Dies ist eine Warnung.'):

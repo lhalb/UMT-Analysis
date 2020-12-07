@@ -1,4 +1,10 @@
-# -*- coding: utf-8 -*-
+from PyQt5.QtWidgets import QMessageBox as QMB
+from PyQt5 import QtCore, QtGui, QtWidgets
+import umt_gui_tab
+import umt_filter as umt
+import sys  # We need sys so that we can pass argv to QApplication
+import json
+
 """
 Created on Mon Jun 22 16:43:18 2020
 
@@ -17,14 +23,7 @@ Code für Umwandlung:
     pyuic5 -x template.ui -o template.py
 
 '''
-from PyQt5.QtWidgets import QMessageBox as QMB
-from PyQt5 import QtCore, QtGui, QtWidgets
-import umt_gui_tab
-import umt_filter as umt
-import sys # We need sys so that we can pass argv to QApplication
-from os.path import basename
-import json
-from numpy.linalg import LinAlgError
+
 
 class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
     def __init__(self):
@@ -36,7 +35,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         icon.addPixmap(QtGui.QPixmap(root + "/Icons/ico.png"), QtGui.QIcon.Selected, QtGui.QIcon.On)
         self.setWindowIcon(icon)
         self.statusBar().showMessage('Programm erfolgreich geladen.', 2000)
-        self.setup_triggers()   # lade Events für Buttons
+        self.setup_triggers()  # lade Events für Buttons
 
         self.disable_settings()
 
@@ -46,7 +45,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         self.but_export.clicked.connect(self.export_to_excel)
         self.but_clear_data.clicked.connect(self.clear_df)
 
-        # Aus-/Einklappen
+        # Fold/unfold
         # self.but_collapse_export.clicked.connect(lambda: self.toggle_area(self.but_collapse_export))
         # self.but_collapse_auto.clicked.connect(lambda: self.toggle_area(self.but_collapse_auto))
         # self.but_collapse_settings.clicked.connect(lambda: self.toggle_area(self.but_collapse_settings))
@@ -57,7 +56,6 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         self.but_auto_cof.clicked.connect(self.auto_cof)
         self.but_auto_export.clicked.connect(self.auto_export)
 
-
         # Radiobuttons
         self.rb_cof_t.toggled.connect(lambda: self.fill_rkf_bounds(self.rb_cof_t))
         self.rb_cof_s.toggled.connect(lambda: self.fill_rkf_bounds(self.rb_cof_s))
@@ -66,6 +64,9 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         self.rb_filt_med.toggled.connect(lambda: self.enable_filters(self.rb_filt_med))
         self.rb_export_red.toggled.connect(lambda: self.change_export_mode(self.rb_export_red))
         self.rb_export_n.toggled.connect(lambda: self.change_export_mode(self.rb_export_n))
+        self.rb_export_lines.toggled.connect(lambda: self.change_export_mode(self.rb_export_lines))
+        self.cb_exp_sel_none.toggled.connect(lambda: self.select_columns('none'))
+        self.cb_exp_sel_all.toggled.connect(lambda: self.select_columns('all'))
 
         # Plotten
         self.but_plot_raw.clicked.connect(self.plot_raw)
@@ -81,6 +82,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         self.tool_input_file.clicked.connect(self.file_open)
         self.tool_output_pics.clicked.connect(lambda: self.folder_open(self.txt_output_pics))
 
+
         # Bestätigungen
         self.but_min_ok.clicked.connect(self.confirm_minima)
         self.but_dist_ok.clicked.connect(self.confirm_slope)
@@ -94,7 +96,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         self.actionSpeichern.triggered.connect(self.save_settings)
         self.actionLaden.triggered.connect(self.load_settings)
         self.actionExport.triggered.connect(self.export_to_excel)
-    
+
     # -----------------  Algorithmen -------------------
     def load_data(self):
         valid = self.validate_parameters()
@@ -103,7 +105,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         # Teste, ob Änderungen am Dateipfad vorgenommen wurden
         if self.fname == self.txt_input_file.text():
             fname = self.fname
-        else: 
+        else:
             fname = self.txt_input_file.text()
         try:
             df = umt.get_data(fname)
@@ -113,6 +115,8 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         self.compare_lists(df)
 
         self.tabs.setTabEnabled(3, True)
+        self.cb_exp_sel_all.setEnabled(True)
+        self.cb_exp_sel_none.setEnabled(True)
 
         return df
 
@@ -128,14 +132,14 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 dist = int(self.txt_para_min_dist.text())
             except ValueError:
                 self.highlight_field(self.txt_para_min_dist)
-                self.show_error_box('Der Punktabstand muss ganzzahlig sein!') 
+                self.show_error_box('Der Punktabstand muss ganzzahlig sein!')
                 return False
 
             # Höhe muss mit -1 multipliziert werden, da minima als negative Maxima gesucht werden
-            height = float(self.txt_para_min_thresh.text().replace(',','.'))*-1
+            height = float(self.txt_para_min_thresh.text().replace(',', '.')) * -1
             # finde die Minima
             loc_minima = umt.find_minima(df['Fx'].values, dist, height)
-            self.minima = df.iloc[loc_minima]   
+            self.minima = df.iloc[loc_minima]
             # schreibe aus Absolutwerte geänderte Daten zurück
             self.df = df
             return True
@@ -147,7 +151,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             # Daten laden
             minima = self.minima
             # Angabe des Grenzwerts in % erwartet
-            thresh = float(self.txt_para_dist_thresh.text().replace(',','.'))*0.01
+            thresh = float(self.txt_para_dist_thresh.text().replace(',', '.')) * 0.01
             # Offset für Datenanalyse
             try:
                 self.un_highlight(self.txt_para_dist_off)
@@ -166,13 +170,13 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         df = self.df
         minima = self.minima
 
-        off = int(self.txt_para_dist_off.text().replace(',','.'))
+        off = int(self.txt_para_dist_off.text().replace(',', '.'))
         cut = self.cut
         thresh_ind = self.thresh_ind
 
         # Beschneide die geladenen Daten
         df_2 = df[df.Time >= cut]
-        minima_2 = minima[:].iloc[thresh_ind+off:]
+        minima_2 = minima[:].iloc[thresh_ind + off:]
 
         # Schreibe die Werte fest in die Daten
         self.df_2 = df_2
@@ -182,22 +186,22 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         if self.df_2 is not None and self.minima_2 is not None:
             df_2 = self.df_2
             minima_2 = self.minima_2
-            
+
             # Slice den Dataframe an den Stellen um die Minima
             to_cut = minima_2.index
             shift = int(self.txt_para_area_shift.text())
 
             # Erstelle Liste mit Indices aller gewünschter Werte
             liste2 = []
-            for j in range(len(to_cut)-1):
-                liste2 += [i for i in range(to_cut[j]+shift, to_cut[j+1]-shift)]
+            for j in range(len(to_cut) - 1):
+                liste2 += [i for i in range(to_cut[j] + shift, to_cut[j + 1] - shift)]
 
             # Bereinigte Daten von Fx
             df_3 = df_2[df_2.index.isin(liste2)]
 
             self.df_3 = df_3
             return True
-        else: 
+        else:
             return False
 
     def get_filtered_data(self):
@@ -245,9 +249,8 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 # print(filtered_data)
                 if filtered_data is not None:
                     pass
-                else: 
+                else:
                     return False, False
-                
 
             elif filt == self.rb_filt_roll.text():
                 n = int(self.txt_para_filt_n_roll.text())
@@ -318,7 +321,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             return False
         else:
             self.un_highlight(self.txt_para_frequency)
-        
+
         try:
             df = self.df_3
             mode = 3
@@ -334,13 +337,12 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                     self.statusBar().showMessage('Hier stimmt etwas gewaltig nicht.', 10000)
                     return
 
-
         if df is not None:
             hub = float(self.txt_para_frequency.text())
             freq = float(self.txt_para_hub.text())
 
-            data = (hub * freq * df['Time'] *2) / 1000
-            df = df.assign(V_weg = data)
+            data = (hub * freq * df['Time'] * 2) / 1000
+            df = df.assign(V_weg=data)
 
             self.compare_lists(df)
 
@@ -354,7 +356,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             return True
         else:
             return False
-  
+
     def get_rkf_data(self):
         if self.df_3 is not None:
             pass
@@ -362,8 +364,8 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             return
         df = self.df_3
 
-        cof = df['Fx']/df['Fz']
-        df = df.assign(RKF = cof)
+        cof = df['Fx'] / df['Fz']
+        df = df.assign(RKF=cof)
 
         self.compare_lists(df)
 
@@ -371,16 +373,15 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
 
     def fill_rkf_bounds(self, b):
         if b.text() == "x = t":
-            if b.isChecked() == True:
+            if b.isChecked():
                 self.lab_cof_start.setText('s')
                 self.lab_cof_end.setText('s')
                 # hier wird ein Wert von 10 als Offset zum letzten Wert gewählt...
                 ende = self.df_3['Time'].iloc[-10]
                 self.txt_para_cof_end.setText(f'{round(ende, 2)}')
-                
-				
+
         if b.text() == "x = s":
-            if b.isChecked() == True:
+            if b.isChecked():
                 self.txt_para_cof_end.setText('')
                 self.lab_cof_start.setText('m')
                 self.lab_cof_end.setText('m')
@@ -392,10 +393,10 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                     if ret:
                         # hier wird ein Wert von 10 als Offset zum letzten Wert gewählt...
                         ende = self.df_3['V_weg'].iloc[-10]
-                    else: 
+                    else:
                         ende = ''
                         return
-                
+
                 self.txt_para_cof_end.setText(f'{round(ende, 2)}')
         self.txt_para_cof_start.setText('')
 
@@ -405,14 +406,13 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             pass
         else:
             # Fuege leere Spalte ein
-            df = df.assign(BNDS = '')
+            df = df.assign(BNDS='')
 
         # Setze die Grenzen in die ersten beiden Zeilen ein
         df.at[df.index[0], 'BNDS'] = start
         df.at[df.index[1], 'BNDS'] = stop
 
         return df['BNDS']
-
 
     def calc_rkf(self):
         self.statusBar().showMessage('')
@@ -486,14 +486,15 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                     return
 
         df = df[cols_to_export]
+        df = self.get_reduction(df)
         
-        n = self.get_reduction(df)
-        
-        df = df[::n]
-
-        # Setze die Berechnungsgrenzen des Reibkoeffizienten
-        boundaries = self.create_bound_col(df, float(self.txt_para_cof_start.text()), float(self.txt_para_cof_end.text()))
-        df = df.assign(BNDS=boundaries)
+        # n = self.get_reduction(df)
+        # df = df[::n]
+        if 'stat_cof' in df.columns:
+            # Setze die Berechnungsgrenzen des Reibkoeffizienten
+            boundaries = self.create_bound_col(df, float(self.txt_para_cof_start.text()),
+                                            float(self.txt_para_cof_end.text()))
+            df = df.assign(BNDS=boundaries)
 
         # Zeige Speichergröße an
         # df.info(memory_usage='deep')
@@ -501,7 +502,6 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         umt.save_as_xls(df, savepath)
 
         self.show_info_box('Datei erfolgreich exportiert')
-
 
     # ------------------ Automation -------------------------
     def auto_prepare_data(self):
@@ -521,7 +521,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         self.cut_data()
         # ab hier existiert df_3
         return True
-    
+
     def auto_filter(self):
         try:
             df = self.df_3
@@ -529,7 +529,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             ret = self.auto_prepare_data()
             if not ret:
                 return False
-            
+
         filt, fdata = self.get_filtered_data()
         if not filt:
             return False
@@ -538,10 +538,10 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
 
         # letzte Zeilen müssen bei gleitendem DFurchschnitt gelöscht, da sonst Daten nicht assigned werden können
         if self.rb_filt_roll.isChecked():
-            anz = int(self.txt_para_filt_n_roll.text())-1
-            df.drop(df.tail(anz).index,inplace=True)
+            anz = int(self.txt_para_filt_n_roll.text()) - 1
+            df.drop(df.tail(anz).index, inplace=True)
 
-        df = df.assign(COF_gefiltert = fdata)
+        df = df.assign(COF_gefiltert=fdata)
 
         self.compare_lists(df)
 
@@ -558,22 +558,20 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 return False
             else:
                 df = self.df_3
-        
+
         self.get_rkf_data()
 
         if self.rb_cof_s.isChecked():
             ret = self.calc_friction_distance()
             if not ret:
                 return False
-        
 
         cof, stabw = self.calc_rkf()
 
         if not cof:
             return False
 
-
-        df = df.assign(stat_cof = cof, stabw=stabw)
+        df = df.assign(stat_cof=cof, stabw=stabw)
 
         self.df_3 = df
 
@@ -595,12 +593,8 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             answer = self.show_msg_box('Es wurde kein Speicherort angegeben.\nFortfahren?')
             if not answer:
                 return
-        
 
-        n = self.get_reduction()
-        
-        # es wird mit allen Daten gearbeitet
-        df = df[::n]
+        df = self.get_reduction()
 
         # Zeige Speichergröße an
         # df.info(memory_usage='deep')
@@ -609,8 +603,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
 
         self.show_info_box('Datei erfolgreich exportiert')
 
-
-    # --------------  Plotfunktionen  ------------------    
+    # --------------  Plotfunktionen  ------------------
     def plot_raw(self):
         df = self.load_data()
         save = self.cb_save_pic_raw.isChecked()
@@ -618,10 +611,11 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
 
         # Wenn kein Speicherverzeichnis angegeben ist
         if save and savepath == '':
-            answer = self.show_msg_box('Es ist kein Speicherort für die Bilder definiert.\nSpeichere im Programmverzeichnis.')
+            answer = self.show_msg_box(
+                'Es ist kein Speicherort für die Bilder definiert.\nSpeichere im Programmverzeichnis.')
             if not answer:
-                return 
-        if df is not None: 
+                return
+        if df is not None:
             umt.plot_data(df['Time'], df['Fx'], save=save, pic_path=savepath)
         else:
             return
@@ -630,7 +624,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         valid = self.validate_parameters()
         if not valid:
             return
-        
+
         if self.create_minima():
             pass
         else:
@@ -674,11 +668,12 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         savepath = self.txt_output_pics.text()
 
         if save and savepath == '':
-            answer = self.show_msg_box('Es ist kein Speicherort für die Bilder definiert.\nSpeichere im Programmverzeichnis.')
+            answer = self.show_msg_box(
+                'Es ist kein Speicherort für die Bilder definiert.\nSpeichere im Programmverzeichnis.')
             if not answer:
-                return 
+                return
 
-        umt.test_minima(df, minima, pos=pos, rand=rand, anz=anz, save=save, p_path=savepath) 
+        umt.test_minima(df, minima, pos=pos, rand=rand, anz=anz, save=save, p_path=savepath)
 
     def plot_slope(self):
         df = self.df
@@ -686,35 +681,35 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         if self.find_slope():
             pass
         else:
-            return 
+            return
 
         minima = self.minima
         dist = self.dist
         thresh_ind = self.thresh_ind
         cut = self.cut
         off = self.off
-        
+
         save = self.cb_save_pic_dist.isChecked()
         savepath = self.txt_output_pics.text()
 
         # Wenn kein Speicherverzeichnis angegeben ist
         if save and savepath == '':
-            answer = self.show_msg_box('Es ist kein Speicherort für die Bilder definiert.\nSpeichere im Programmverzeichnis.')
+            answer = self.show_msg_box(
+                'Es ist kein Speicherort für die Bilder definiert.\nSpeichere im Programmverzeichnis.')
             if not answer:
-                return 
+                return
 
-        # teste den Einlauf mit den aktuellen Einstellungen 
-        umt.test_einlauf(df, dist, minima, thresh_ind, off, cut, save, savepath) 
+                # teste den Einlauf mit den aktuellen Einstellungen
+        umt.test_einlauf(df, dist, minima, thresh_ind, off, cut, save, savepath)
 
     def plot_area(self):
         if self.cut_data():
             pass
-        else: 
+        else:
             return
 
         df_2 = self.df_2
         minima_2 = self.minima_2
-
 
         try:
             anz = int(self.txt_para_area_n.text())
@@ -754,19 +749,21 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
 
         # Wenn kein Speicherverzeichnis angegeben ist
         if (save == True) and (savepath == ''):
-            answer = self.show_msg_box('Es ist kein Speicherort für die Bilder definiert.\nSpeichere im Programmverzeichnis.')
+            answer = self.show_msg_box(
+                'Es ist kein Speicherort für die Bilder definiert.\nSpeichere im Programmverzeichnis.')
             if not answer:
-                return 
+                return
 
-        # Teste, ob Versatz korrekt eingestellt ist
-        umt.test_area(df_2, minima_2, patch_pos=pos, shift=shift, pcount=anz, rand_patch=rand, save=save, p_path=savepath)
+                # Teste, ob Versatz korrekt eingestellt ist
+        umt.test_area(df_2, minima_2, patch_pos=pos, shift=shift, pcount=anz, rand_patch=rand, save=save,
+                      p_path=savepath)
 
     def plot_filter(self):
         if self.df_3 is not None:
             pass
-        else: 
+        else:
             return
-        
+
         # teste, ob schon einmal gefiltert wurde und nehme ggf. diese Werte
         if 'COF_gefiltert' not in self.df_3.columns:
             filt, fdata = self.get_filtered_data()
@@ -781,7 +778,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         if self.rb_filt_med.isChecked() or self.rb_filt_sav.isChecked():
             x2 = df['Time']
         if self.rb_filt_roll.isChecked():
-            anz = int(self.txt_para_filt_n_roll.text())-1
+            anz = int(self.txt_para_filt_n_roll.text()) - 1
             x2 = df['Time'].iloc[:-anz]
 
         save = self.cb_save_pic_filt.isChecked()
@@ -789,16 +786,17 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
 
         # Wenn kein Speicherverzeichnis angegeben ist
         if (save == True) and (savepath == ''):
-            answer = self.show_msg_box('Es ist kein Speicherort für die Bilder definiert.\nSpeichere im Programmverzeichnis.')
+            answer = self.show_msg_box(
+                'Es ist kein Speicherort für die Bilder definiert.\nSpeichere im Programmverzeichnis.')
             if not answer:
-                return 
+                return
 
-        umt.plot_data(df['Time'], df['RKF'], x2, fdata, ptype='filtered',save=save, filter=filt, pic_path=savepath)
+        umt.plot_data(df['Time'], df['RKF'], x2, fdata, ptype='filtered', save=save, filter=filt, pic_path=savepath)
 
     def plot_cof(self):
         if self.df_3 is not None:
             pass
-        else: 
+        else:
             return
 
         # wenn Verschleißweg noch nicht berechnet ist, 
@@ -806,13 +804,14 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             ret = self.calc_friction_distance()
             if ret:
                 pass
-            else: 
+            else:
                 self.show_error_box('Zur Berechnung des Verschleißweges fehlen noch Eingaben!')
                 return
 
         # Wenn keine Grenzen angeben sind
         if self.txt_para_cof_start.text() == '':
-            answer = self.show_msg_box('Es ist kein Startpunkt für die Berechnung von COF definiert.\nGebe die gefilterten Daten aus.')
+            answer = self.show_msg_box(
+                'Es ist kein Startpunkt für die Berechnung von COF definiert.\nGebe die gefilterten Daten aus.')
             if not answer:
                 return
             else:
@@ -842,11 +841,12 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
 
         # Wenn kein Speicherverzeichnis angegeben ist
         if (save == True) and (savepath == ''):
-            answer = self.show_msg_box('Es ist kein Speicherort für die Bilder definiert.\nSpeichere im Programmverzeichnis.')
+            answer = self.show_msg_box(
+                'Es ist kein Speicherort für die Bilder definiert.\nSpeichere im Programmverzeichnis.')
             if not answer:
-                return 
+                return
 
-        # setze die zu plottenden Rohdaten gemäß der Auswahl
+                # setze die zu plottenden Rohdaten gemäß der Auswahl
         if self.rb_cof_t.isChecked():
             x = df['Time']
         elif self.rb_cof_s.isChecked():
@@ -860,7 +860,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                     return
                 df = self.df_3
                 x = df['V_weg']
-        
+
         # # passe die gefilterten X-Werte an, falls andere Filter ausgewählt sind.
         # if self.rb_filt_med.isChecked() or self.rb_filt_sav.isChecked():
         #     x2 = x
@@ -869,12 +869,12 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         #     x2 = x.iloc[:-anz]
 
         if modus == 'filtered':
-            umt.plot_data(x, df['RKF'], x, fdata, ptype='filtered',save=save, filter=filt, pic_path=savepath)
+            umt.plot_data(x, df['RKF'], x, fdata, ptype='filtered', save=save, filter=filt, pic_path=savepath)
         elif modus == 'rkf':
             start = float(self.txt_para_cof_start.text())
-            end = float(self.txt_para_cof_end.text())    
-            umt.plot_data(x, df['RKF'], x, fdata, ptype='filtered',save=save, filter=filt,\
-                pic_path=savepath, rkf=(y_rkf, stabw), rkf_start=start, rkf_end=end)
+            end = float(self.txt_para_cof_end.text())
+            umt.plot_data(x, df['RKF'], x, fdata, ptype='filtered', save=save, filter=filt, pic_path=savepath,
+                          rkf=(y_rkf, stabw), rkf_start=start, rkf_end=end)
 
     def plot_export(self):
         # teste, ob schon Daten vorhanden sind
@@ -888,13 +888,14 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             return
 
         if len(cols_to_plot) > 2:
-            self.show_error_box('Es können aktuell nicht mehr als 2 Spalten zum Plotten ausgewählt werden.\nBitte wähle Spalten ab.')
+            self.show_error_box(
+                'Es können aktuell nicht mehr als 2 Spalten zum Plotten ausgewählt werden.\nBitte wähle Spalten ab.')
             return
-        
+
         if not any(x in cols_to_plot for x in ['Time', 'V_weg']):
             self.show_error_box('Fehlerhafte x-Werte.\nBitte wähle die Spalte "Time" oder "V_weg" aus.')
             return
-        
+
         if cols_to_plot == ['Time', 'V_weg']:
             self.show_error_box('Das ergibt eine Gerade.\nBitte wähle die Spalte "Time" ODER "V_weg" aus.')
             return
@@ -916,10 +917,10 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
 
         # Wenn kein Speicherverzeichnis angegeben ist
         if (save == True) and (savepath == ''):
-            answer = self.show_msg_box('Es ist kein Speicherort für die Bilder definiert.\nSpeichere im Programmverzeichnis.')
+            answer = self.show_msg_box(
+                'Es ist kein Speicherort für die Bilder definiert.\nSpeichere im Programmverzeichnis.')
             if not answer:
-                return 
-
+                return
 
         df = df[cols_to_plot]
 
@@ -932,17 +933,10 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             cols_to_plot.remove('Time')
             y = df[cols_to_plot[0]]
 
-        if self.rb_filt_roll.isChecked():
-            anz = int(self.txt_para_filt_n_roll.text())-1
-            x = x.iloc[:-anz]
-
-        n = self.get_reduction(x)
-
-        x2 = x[::n]
-        y2 = y[::n] 
+        x2 = self.get_reduction(x)
+        y2 = self.get_reduction(y)
 
         umt.plot_data(x, y, x2, y2, ptype='export', save=save, pic_path=savepath)
-
 
     # ------------------  Bestätigungen ---------------------
     def confirm_minima(self):
@@ -956,27 +950,26 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         if self.find_slope():
             pass
         else:
-            return 
-        
+            return
+
         self.calc_slope()
 
         self.gb_area.setEnabled(True)
-     
+
     def confirm_area(self):
         if self.cut_data():
             pass
-        else: 
+        else:
             return
         # self.gb_filter.setEnabled(True)
-        
+
         self.tabs.setTabEnabled(1, True)
 
     def confirm_filter(self):
         if self.df_3 is not None:
             pass
-        else: 
+        else:
             return
-
 
         filt, fdata = self.get_filtered_data()
         if not filt:
@@ -986,10 +979,10 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
 
         # letzte Zeilen müssen bei gleitendem DFurchschnitt gelöscht, da sonst Daten nicht assigned werden können
         if self.rb_filt_roll.isChecked():
-            anz = int(self.txt_para_filt_n_roll.text())-1
-            df.drop(df.tail(anz).index,inplace=True)
+            anz = int(self.txt_para_filt_n_roll.text()) - 1
+            df.drop(df.tail(anz).index, inplace=True)
 
-        df = df.assign(COF_gefiltert = fdata)
+        df = df.assign(COF_gefiltert=fdata)
 
         self.compare_lists(df)
 
@@ -1005,7 +998,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         except AttributeError:
             self.show_error_box('Die Daten sind noch nicht vorbereitet.\nVersuche die automatische Filterung.')
             return
-        
+
         self.get_rkf_data()
 
         if self.rb_cof_s.isChecked():
@@ -1027,12 +1020,11 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         if not cof:
             return
 
-        df = df.assign(stat_cof = cof, stabw=stabw)
+        df = df.assign(stat_cof=cof, stabw=stabw)
 
         self.compare_lists(df)
 
         self.df_3 = df
-
 
     # ------------------- Hilfsfunktionen ------------------------
     def clear_df(self):
@@ -1046,14 +1038,13 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
     def disable_settings(self):
         self.tabs.setTabEnabled(1, False)
         self.tabs.setTabEnabled(2, False)
-        self.tabs.setTabEnabled(3, False)
         self.gb_dist.setEnabled(False)
         self.gb_area.setEnabled(False)
         return
 
     def get_frequency(self, fname):
-        def find_hz_in_fname(fname, row, raw=False, splitter='_'):
-            with open(fname, 'r') as f:
+        def find_hz_in_fname(file, row, raw=False, splitter='_'):
+            with open(file, 'r') as f:
                 for i, line in enumerate(f):
                     if i == row:
                         if raw:
@@ -1073,7 +1064,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         if 'Data File' in firstline:
             # Lese reduzierte Daten ein
             liste = find_hz_in_fname(fname, 1, raw=True)
-            hz = float([i for i  in liste if 'Hz' in i][0].replace('Hz', '').replace(',', '.'))
+            hz = float([i for i in liste if 'Hz' in i][0].replace('Hz', '').replace(',', '.'))
 
             self.txt_para_frequency.setText(f'{hz}')
 
@@ -1081,13 +1072,14 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         elif 'Data Viewer' in firstline:
             liste = find_hz_in_fname(fname, 14, splitter='=')
 
-            hz = float(liste[1].replace(',','.'))
+            hz = float(liste[1].replace(',', '.'))
 
             if hz > 30:
-                self.show_error_box('In dieser Datei wurde wahrscheinlich die Geschwindigkeit angegeben.\nPasse Daten an.')
-                
+                self.show_error_box(
+                    'In dieser Datei wurde wahrscheinlich die Geschwindigkeit angegeben.\nPasse Daten an.')
+
                 liste = find_hz_in_fname(fname, 5, raw=True)
-                hz2 = float([i for i  in liste if 'Hz' in i][0].replace('Hz', '').replace(',', '.'))
+                hz2 = float([i for i in liste if 'Hz' in i][0].replace('Hz', '').replace(',', '.'))
 
                 self.txt_para_frequency.setText(f'{hz2}')
 
@@ -1095,7 +1087,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 self.txt_para_frequency.setText(f'{hz}')
 
         # Sonst sage, dass du die Daten nicht kennst und gebe nichts zurück
-        else: 
+        else:
             self.show_error_box('Das Datenformat kenne ich nicht.\nWähle eine andere Datei.')
             return
 
@@ -1105,7 +1097,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         lw = self.list_data
         # let lw haven elements in it.
         items = []
-        for x in range(lw.count()-1):
+        for x in range(lw.count() - 1):
             items.append(lw.item(x))
 
         # Wenn die aktuellen Labels gleich sind
@@ -1119,7 +1111,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 # Ändere Text nur, wenn verschieden
                 if item.text() != liste[i]:
                     item.setText(liste[i])
-        else: 
+        else:
             self.list_data.clear()
             for i in liste:
                 item = QtWidgets.QListWidgetItem(i)
@@ -1146,7 +1138,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             n_roll.setEnabled(False)
             l_n_roll.setEnabled(False)
 
-        if b.text() == 'Gleitender Durchschnitt' and b.isChecked():            
+        if b.text() == 'Gleitender Durchschnitt' and b.isChecked():
             n_sav.setEnabled(False)
             p_sav.setEnabled(False)
             l_n_sav.setEnabled(False)
@@ -1155,7 +1147,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             l_n_med.setEnabled(False)
             n_roll.setEnabled(True)
             l_n_roll.setEnabled(True)
-            
+
         if b.text() == 'Median-Filter' and b.isChecked():
             n_sav.setEnabled(False)
             p_sav.setEnabled(False)
@@ -1177,7 +1169,8 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             f.setEnabled(vis)
 
     def save_settings(self):
-        fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Speicherort für Einstellungen wählen.', '', 'JSON-Dateien (*.json);;All Files (*)')[0]
+        fname = QtWidgets.QFileDialog.getSaveFileName(self, 'Speicherort für Einstellungen wählen.', '',
+                                                      'JSON-Dateien (*.json);;All Files (*)')[0]
         if not fname:
             return
 
@@ -1199,39 +1192,39 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             red_mode = 'Faktor'
 
         sett = {
-            'th_min' : self.txt_para_min_thresh.text(),
-            'dist_min' : self.txt_para_min_dist.text(),
-            'anz_min' : self.txt_para_min_n.text(),
-            't_dist' : self.txt_para_dist_thresh.text(),
-            'off_dist' : self.txt_para_dist_off.text(),
-            'shift' : self.txt_para_area_shift.text(),
-            'anz_area' : self.txt_para_area_shift.text(),
-            'Filter' : filt,
-            'n_sav' : self.txt_para_filt_n_sav.text(),
-            'p_sav' : self.txt_para_filt_p_sav.text(),
-            'n_roll' : self.txt_para_filt_n_roll.text(),
-            'n_med' : self.txt_para_filt_n_med.text(),
-            'COF-Mode' : coef_mode,
-            'cof_start' : self.txt_para_cof_start.text(),
-            'cof_end' : self.txt_para_cof_end.text(),
+            'th_min': self.txt_para_min_thresh.text(),
+            'dist_min': self.txt_para_min_dist.text(),
+            'anz_min': self.txt_para_min_n.text(),
+            't_dist': self.txt_para_dist_thresh.text(),
+            'off_dist': self.txt_para_dist_off.text(),
+            'shift': self.txt_para_area_shift.text(),
+            'anz_area': self.txt_para_area_shift.text(),
+            'Filter': filt,
+            'n_sav': self.txt_para_filt_n_sav.text(),
+            'p_sav': self.txt_para_filt_p_sav.text(),
+            'n_roll': self.txt_para_filt_n_roll.text(),
+            'n_med': self.txt_para_filt_n_med.text(),
+            'COF-Mode': coef_mode,
+            'cof_start': self.txt_para_cof_start.text(),
+            'cof_end': self.txt_para_cof_end.text(),
 
-            'RED-Mode' : red_mode,
-            'fak_red' : self.txt_para_exp_red.text(),
-            'anz_red' : self.txt_para_exp_n.text(),
+            'RED-Mode': red_mode,
+            'fak_red': self.txt_para_exp_red.text(),
+            'anz_red': self.txt_para_exp_n.text(),
 
             # optionale Parameter
-            'pos_min' : self.txt_para_min_pos.text(),
-            'pos_area' : self.txt_para_area_pos.text(),
+            'pos_min': self.txt_para_min_pos.text(),
+            'pos_area': self.txt_para_area_pos.text(),
 
-            'pic_path' : self.txt_output_pics.text(),
-            'export_path' : self.txt_output_file.text(),
+            'pic_path': self.txt_output_pics.text(),
+            'export_path': self.txt_output_file.text(),
         }
         with open(fname, 'w') as json_file:
             json.dump(sett, json_file)
-        
+
         self.show_info_box('Konfiguration erfolgreich gesichert.')
 
-    def load_settings(self, fname):
+    def load_settings(self):
         fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Wähle eine Quelldatei', filter='*.json')[0]
         if not fname:
             return
@@ -1257,7 +1250,6 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             self.rb_filt_sav.setChecked(False)
             self.rb_filt_roll.setChecked(False)
             self.rb_filt_med.setChecked(True)
-                
 
         self.txt_para_filt_n_sav.setText(data['n_sav']),
         self.txt_para_filt_p_sav.setText(data['p_sav']),
@@ -1297,10 +1289,17 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             self.txt_para_exp_red.setEnabled(True)
             self.lab_export_red.setEnabled(True)
             self.txt_para_exp_n.setEnabled(False)
+            self.txt_para_exp_lines.setEnabled(False)
         if b.text() == 'Punkte':
             self.txt_para_exp_red.setEnabled(False)
             self.lab_export_red.setEnabled(False)
             self.txt_para_exp_n.setEnabled(True)
+            self.txt_para_exp_lines.setEnabled(False)
+        if b.text() == 'Zeilen':
+            self.txt_para_exp_lines.setEnabled(True)
+            self.txt_para_exp_red.setEnabled(False)
+            self.lab_export_red.setEnabled(False)
+            self.txt_para_exp_n.setEnabled(False)
 
     def get_cols(self):
         liste = []
@@ -1313,12 +1312,16 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         #  Hier werden die Daten reduziert
         if self.rb_export_red.isChecked():
             # passe die gefilterten X-Werte an, falls andere Filter ausgewählt sind.
-            n = int(self.txt_para_exp_red.text())    
-        else:
+            n = int(self.txt_para_exp_red.text())
+            df = x[::n]
+        elif self.rb_export_n.isChecked(): 
             angestrebte_punkte = int(self.txt_para_exp_n.text())
-            n = int(round(len(x)/angestrebte_punkte,0))
-
-        return n
+            n = int(round(len(x) / angestrebte_punkte, 0))
+            df = x[::n]
+        elif self.rb_export_lines.isChecked():
+            lines = int(self.txt_para_exp_lines.text())
+            df = x[:lines]
+        return df
 
     def proc_path(self, receiver, text):
         # Hier wird der Pfad in das Textfeld des 'receivers' geschrieben
@@ -1329,8 +1332,8 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         self.statusBar().setStyleSheet('color:black; font-weight:normal')
 
     def highlight_field(self, field):
-        field.setStyleSheet('border: 2px solid red;')   
-        self.statusBar().setStyleSheet('color:red; font-weight:bold') 
+        field.setStyleSheet('border: 2px solid red;')
+        self.statusBar().setStyleSheet('color:red; font-weight:bold')
 
     def validate_parameters(self):
         self.statusBar().showMessage('')
@@ -1341,11 +1344,12 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         else:
             self.un_highlight(self.txt_input_file)
 
-
         return True
 
     def file_save(self):
-        out_file = QtWidgets.QFileDialog.getSaveFileName(self, 'Speicherort wählen', '', 'Excel-Files (*.xlsx);;All Files (*)')[0]
+        out_file = \
+            QtWidgets.QFileDialog.getSaveFileName(self, 'Speicherort wählen', '',
+                                                  'Excel-Files (*.xlsx);;All Files (*)')[0]
         if not out_file:
             return
         self.proc_path(self.txt_output_file, out_file)
@@ -1370,10 +1374,9 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
                 pass
         # Wenn noch gar keine alten Daten vorhanden --> lade normal die Date
         except AttributeError:
-            self.fname  = fname
+            self.fname = fname
             pass
-            
-        
+
         #  Setze den Pfad in die Felder ein
         self.proc_path(self.txt_input_file, self.fname)
         # Ziehe die Frequenz oder die Geschwindigkeit aus den Daten
@@ -1388,23 +1391,25 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             return
         self.proc_path(dest, path)
         self.statusBar().showMessage('Ordner erfolgreich geladen', 2000)
-             
+
     def debug(self):
-        '''
+        """
             In diese Funktion kommt alles rein, was gerade getestet werden soll
-        '''
+        """
+        # print(self.df)
+
         return
 
     def show_msg_box(self, text='Dies ist eine Warnung.'):
-        msg = QMB()   
+        msg = QMB()
         msg.setWindowTitle("Warnung")
         msg.setText(text)
         msg.setIcon(QMB.Warning)
         msg.setStandardButtons(QMB.Cancel | QMB.Ok)
         msg.setDefaultButton(QMB.Ok)
 
-        returnValue = msg.exec()
-        if returnValue == QMB.Ok:
+        returnvalue = msg.exec()
+        if returnvalue == QMB.Ok:
             press = True
         else:
             press = False
@@ -1412,7 +1417,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         return press
 
     def show_error_box(self, text='Fehler'):
-        msg = QMB()   
+        msg = QMB()
         msg.setWindowTitle("Hinweis")
         msg.setText(text)
         msg.setIcon(QMB.Critical)
@@ -1422,7 +1427,7 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
         msg.exec()
 
     def show_info_box(self, text='Info'):
-        msg = QMB()   
+        msg = QMB()
         msg.setWindowTitle("Information")
         msg.setText(text)
         msg.setIcon(QMB.Information)
@@ -1443,33 +1448,52 @@ class UMT(QtWidgets.QMainWindow, umt_gui_tab.Ui_UMT_Auswertung):
             max_height = 200
 
         area_height = area.geometry().height()
-        win_height_akt = self.centralwidget.geometry().height() 
+        win_height_akt = self.centralwidget.geometry().height()
         win_width_akt = self.centralwidget.geometry().width()
 
-
-        if 'Verstecke' in but.text(): 
+        if 'Verstecke' in but.text():
             new_text = but.text().replace('Verstecke ', 'Zeige ')
-            area.setMaximumHeight(0)    
+            area.setMaximumHeight(0)
             new_win_height = win_height_akt - area_height
             # self.centralwidget.setFixedHeight(win_height_akt - area_height)
-            
+
         if 'Zeige' in but.text():
             new_text = but.text().replace('Zeige ', 'Verstecke ')
             area.setMaximumHeight(max_height)
             new_win_height = win_height_akt + max_height
             # self.centralwidget.setFixedHeight()
-            
+
         self.resize(win_width_akt, new_win_height)
         but.setText(new_text)
+
+    def select_columns(self, mode):
+        if self.list_data.count() == 0:
+            return
+
+        if mode=='all': 
+            state = 2
+            self.cb_exp_sel_all.setChecked(True)
+        elif mode == 'none':
+            state = 0
+            self.cb_exp_sel_none.setChecked(False)
+        else: 
+            return
+        
+        for i in range(self.list_data.count()):
+            self.list_data.item(i).setCheckState(state)
+        
+        return
+
 
 def main():
     if not QtWidgets.QApplication.instance():
         app = QtWidgets.QApplication(sys.argv)
     else:
         app = QtWidgets.QApplication.instance()
-    form = UMT()             # We set the form to be our ExampleApp (bsp1)
-    form.show()                         # Show the form
-    sys.exit(app.exec_())                         # and execute the app
+    form = UMT()  # We set the form to be our ExampleApp (bsp1)
+    form.show()  # Show the form
+    sys.exit(app.exec_())  # and execute the app
+
 
 if __name__ == '__main__':
     main()
